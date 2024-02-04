@@ -1,0 +1,43 @@
+# Use Alpine Linux as base image
+FROM debian:12.4-slim
+
+RUN apt-get update && \
+    apt-get install -y \
+        wget \
+        zstd \
+        xdg-utils \
+        qt6-base-dev \
+        libnss3 \
+        libasound2
+
+RUN apt install -y python3.11-venv libxcb-cursor0
+
+# Set the locale to en_US.UTF-8
+RUN apt-get update && \
+    apt-get install -y locales && \
+    sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+    dpkg-reconfigure --frontend=noninteractive locales && \
+    update-locale LANG=en_US.UTF-8
+ENV LANG=en_US.UTF-8
+
+RUN groupadd -r anki && \
+    useradd --create-home -r -g anki anki
+
+# install a pre-compiled Anki
+COPY anki-23.12.1-linux-qt6.tar.zst /home/anki/
+
+# Install AnkiConnect
+COPY 2055492159 /home/anki/.local/share/Anki2/addons21/2055492159 
+
+# Set working directory
+WORKDIR /home/anki/
+
+RUN tar -xf anki-23.12.1-linux-qt6.tar.zst
+
+RUN chown -R anki:anki /home/anki
+
+USER anki
+
+# Command to run Anki
+CMD ["./anki-23.12.1-linux-qt6/anki"]
+
